@@ -18,7 +18,8 @@ from lm_eval.utils import (
     run_task_tests,
     simple_parse_args_string,
 )
-
+import pandas as pd
+import os
 
 @positional_deprecated
 def simple_evaluate(
@@ -406,6 +407,7 @@ def evaluate(
                 continue
         # TODO: make it possible to use a different metric per filter
         # iterate over different filters used
+        reg_results = []
         for key in task.instances[0].filtered_resps.keys():
             doc_iterator = (
                 itertools.islice(
@@ -416,13 +418,22 @@ def evaluate(
                     enumerate(task.validation_docs()), lm.rank, limit, lm.world_size
                 )
             )
+
             for doc_id, doc in doc_iterator:
                 # subset instances to only this document id ; sort by idx
                 requests = list(filter(lambda x: x.doc_id == doc_id, task.instances))
                 requests.sort(key=lambda x: x.idx)
-                metrics = task.process_results(
+                metrics, final_result, gold, question, result_score = task.process_results(
                     doc, [req.filtered_resps[key] for req in requests]
                 )
+                # Yu Cheng
+                # to extract the entities
+                reg_results.append({
+                    "question": question.split("\n")[0].strip('"'),
+                    "answer": gold,
+                    "prediction": final_result[0],
+                    "result_score": result_score
+                })
                 if log_samples:
                     target = task.doc_to_target(doc)
                     example = {
@@ -437,6 +448,14 @@ def evaluate(
                     samples[task_name].append(example)
                 for metric, value in metrics.items():
                     vals[(task_name, key, metric)].append(value)
+            # to save the result
+            df = pd.DataFrame(reg_results)
+            df_csv = df[['question', 'answer', 'prediction', 'result_score']]
+
+            root_path = r"./"
+            # csv_path = ""
+            csv_path = os.path.join(root_path, 'result.csv')
+            df_csv.to_csv(csv_path, index=False)
 
     if lm.world_size > 1:
         # if multigpu, then gather data across all ranks

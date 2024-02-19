@@ -1177,7 +1177,14 @@ class ConfigurableTask(Task):
 
         elif self.OUTPUT_TYPE == "generate_until":
             gold = self.doc_to_target(doc)
+            # Yu Cheng
+            question = self.doc_to_text(doc)
+
             result = results[0]
+
+            #Yu Cheng
+            final_result = result
+
             if self.config.doc_to_choice is not None:
                 # If you set doc_to_choice,
                 # it assumes that doc_to_target returns a number.
@@ -1249,7 +1256,7 @@ class ConfigurableTask(Task):
                 "'loglikelihood', 'loglikelihood_rolling', 'generate_until' or 'multiple_choice'",
             )
 
-        return result_dict
+        return result_dict, final_result, gold, question, result_score
 
     def aggregation(self) -> dict:
         return self._aggregation_list

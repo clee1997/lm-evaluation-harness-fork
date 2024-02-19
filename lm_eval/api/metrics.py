@@ -115,6 +115,30 @@ def ter(items):
     refs, preds = _sacreformat(refs, preds)
     return sacrebleu.corpus_ter(preds, refs).score
 
+@register_metric(
+    metric="topk_acc",
+    higher_is_better=True,
+    # output_type=["loglikelihood", "multiple_choice"],
+    output_type="generate_until",
+    aggregation="mean",
+)
+def topk_match_fn(items):  
+    print(f"input passed ('items') to metric func topk_match_fn decorated by register = {items}")
+
+    one_of_labels = items[0] # items[1][0][0] for debug (always gets right)
+    topk_preds = items[1][0] # list!
+
+    hit = 0
+    hit = 1 if one_of_labels in topk_preds else 0
+
+    print()
+    print(f"HIT = {hit}")
+    if hit==1:
+        print(f"one_of_labels = {one_of_labels}, topk_preds = {topk_preds}")
+    print()
+
+    return hit
+
 
 @register_metric(
     metric="acc",

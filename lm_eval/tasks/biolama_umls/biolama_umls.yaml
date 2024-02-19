@@ -1,0 +1,24 @@
+task: biolama_umls
+dataset_path: chaeeunlee/cloze-umls-test # JadeCheng/Biolama-umls
+training_split: train
+validation_split: validation
+test_split: test
+output_type: generate_until
+doc_to_text: !function process_umls.doc_to_text
+doc_to_target: !function process_umls.doc_to_target
+metric_list:
+  - metric: topk_acc #_norm # does handle multiple targets
+    aggregation: mean
+    higher_is_better: true
+filter_list:
+  - name: "custom-filt"
+    filter:
+      - function: "topk_json_string_to_list"
+      # - function: "regex"
+      #   regex_pattern: "The answer is (\\-?[0-9\\.\\,]+)"
+      # - function: "take_first"
+
+# set env var for API KEY
+# run following command
+# python lm_eval --model openai-chat-completions --model_args model=gpt-3.5-turbo --tasks biolama_umls
+# -> why does this work without python?
